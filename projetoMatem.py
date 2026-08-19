@@ -93,13 +93,28 @@ st.markdown(
 )
 
 # --- ADIÇÃO DA LOGO NO TOPO ---
+import base64
+
+def carregar_imagem_base64(caminho):
+    with open(caminho, "rb") as f:
+        return base64.b64encode(f.read()).decode()
+
 if os.path.exists("logo3.png"):
-  st.image("logo3.png", width=900)
+    logo_base64 = carregar_imagem_base64("logo3.png")
+    st.markdown(
+        f"""
+        <div style="width:100%; height:160px; overflow:hidden; margin-bottom:15px;">
+            <img src="data:image/png;base64,{logo_base64}"
+                 style="width:100%; height:100%; object-fit:cover; object-position:center;" />
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 else:
-  st.warning(
-      "⚠️ Arquivo 'logo.png' não encontrado no diretório do projeto. Verifique"
-      " se ele foi enviado para o repositório."
-  )
+    st.warning(
+        "⚠️ Arquivo 'logo.png' não encontrado no diretório do projeto. Verifique"
+        " se ele foi enviado para o repositório."
+    )
 
 st.title("📊 Violência contra mulher / Dados por região")
 if st.button("🔄 Atualizar Dados da Planilha"):
