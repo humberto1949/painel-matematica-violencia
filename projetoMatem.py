@@ -4,7 +4,15 @@ import pandas as pd
 import re
 import streamlit as st
 
-st.set_page_config(page_title="Painel de Dados - SC", layout="wide")
+st.set_page_config(
+    page_title="Painel de Dados - SC",
+    page_icon = "📊",
+    layout="wide")
+
+st.markdown(
+    '<html lang="pt-BR">', 
+    unsafe_allow_html=True
+    )
 
 # --- CSS PARA REMOVER O ESPAÇO EM BRANCO DO TOPO E CUSTOMIZAR ELEMENTOS ---
 st.markdown(
@@ -85,8 +93,8 @@ st.markdown(
 )
 
 # --- ADIÇÃO DA LOGO NO TOPO ---
-if os.path.exists("logo.png"):
-  st.image("logo.png", use_column_width=True)
+if os.path.exists("logo3.png"):
+  st.image("logo3.png", width="content")
 else:
   st.warning(
       "⚠️ Arquivo 'logo.png' não encontrado no diretório do projeto. Verifique"
@@ -129,12 +137,42 @@ pagina_selecionada = st.radio(
 
 st.write("---")
 
+def limpar_dashboard():
+      # Volta a região para o estado inicial
+      st.session_state ["regiao_guia"] = "Escolha a Região..."
+      
+      # Remove seleções de ocorrência
+      chaves_para_remover = [
+        chave
+        for chave in st.session_state.keys()
+        if chave.startswith("seletor_ocorrencia_")
+        or chave.startswith("Radio_")
+        or chave.startswith("c_")
+      ]
+      
+      for chave in chaves_para_remover:
+            del st.session_state[chave]
+
 if pagina_selecionada == "📊 Dados por Região (Detalhado)":
   try:
     opcoes_regiao = ["Escolha a Região..."] + list(MAPA_REGIOES.keys())
-    aba_selecionada = st.selectbox(
-        "Selecione a Região (Guia):", options=opcoes_regiao
-    )
+    col_regiao, col_limpar = st.columns([5,1])
+    
+    with col_regiao:
+      aba_selecionada = st.selectbox(
+        "Selecione a Região (Guia):",
+        options=opcoes_regiao,
+        key="regiao_guia",
+      )
+      
+      with col_limpar:
+        st.write("")
+        st.write("")
+        st.button(
+          "🗑Limpar Seleção",
+          on_click=limpar_dashboard,
+          use_container_width=True,
+        )
 
     if aba_selecionada == "Escolha a Região...":
       st.info("ℹ️ Por favor, selecione uma região acima para começar.")
