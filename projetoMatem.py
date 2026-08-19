@@ -392,7 +392,7 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                   or "1.000" in c_low
               ):
                 continue
-              if "REDUÇÃO" in c_low:
+              if "redução" in c_low:
                     continue
               if "pa" in c_low and "media" not in c_low:
                 mapeamento_checkboxes["Projeções PA"] = col
