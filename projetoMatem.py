@@ -392,15 +392,14 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                   or "1.000" in c_low
               ):
                 continue
+              if "REDUÇÃO" in c_low:
+                    continue
               if "pa" in c_low and "media" not in c_low:
                 mapeamento_checkboxes["Projeções PA"] = col
               elif "pg" in c_low and "media" not in c_low:
                 mapeamento_checkboxes["Projeções PG"] = col
               elif "aumento" in c_low:
                 mapeamento_checkboxes["Aumento"] = col
-              elif "redução" in c_low:
-                mapeamento_checkboxes["Redução"] = col
-
             colunas_selecionadas_reais = []
             if mapeamento_checkboxes:
               st.markdown("**Selecione as projeções desejadas:**")
