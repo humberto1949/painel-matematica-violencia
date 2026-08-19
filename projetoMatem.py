@@ -94,7 +94,7 @@ st.markdown(
 
 # --- ADIÇÃO DA LOGO NO TOPO ---
 if os.path.exists("logo3.png"):
-  st.image("logo3.png", width="900")
+  st.image("logo3.png", width=900)
 else:
   st.warning(
       "⚠️ Arquivo 'logo.png' não encontrado no diretório do projeto. Verifique"
