@@ -103,9 +103,9 @@ if os.path.exists("logo3.png"):
     logo_base64 = carregar_imagem_base64("logo3.png")
     st.markdown(
         f"""
-        <div style="width:100%; height:160px; overflow:hidden; margin-bottom:15px;">
+        <div style="width:100%; height:160px; overflow:hidden; margin-bottom:15px; background-color:#0d2b5e; display:flex; align-items:center; justify-content:center;">
             <img src="data:image/png;base64,{logo_base64}"
-                 style="width:100%; height:100%; object-fit:cover; object-position:center;" />
+                 style="width:100%; height:100%; object-fit:contain; object-position:center;" />
         </div>
         """,
         unsafe_allow_html=True,
