@@ -94,6 +94,9 @@ else:
   )
 
 st.title("📊 Violência contra mulher / Dados por região")
+if st.button("🔄 Atualizar Dados da Planilha"):
+    st.cache_data.clear() # Limpa todo o cache
+    st.rerun()
 
 CHAVE_PLANILHA = (
     "2PACX-1vRw2uafpMmb-dtOv9fZpqN1vVwkdxV6diO1bUj-FPQJm_-M5vIEEW_q7mqoEE_AmrF_WWjL92KfB3xk"
