@@ -24,16 +24,14 @@ st.markdown(
     """
     <style>
 
-    /* ======================================================
-       ESPAÇAMENTO DO TOPO
-       ====================================================== */
-
+    /* Remove espaço superior */
     .stMainBlockContainer,
     .block-container {
         padding-top: 0rem !important;
         margin-top: -30px !important;
     }
 
+    /* Esconde header padrão */
     header[data-testid="stHeader"] {
         display: none !important;
     }
@@ -50,22 +48,14 @@ st.markdown(
         visibility: hidden;
     }
 
-
-    /* ======================================================
-       TÍTULOS
-       ====================================================== */
-
+    /* Título */
     h1 {
         font-size: 28px !important;
         font-weight: 700 !important;
         padding-bottom: 10px !important;
     }
 
-
-    /* ======================================================
-       SELECTBOX
-       ====================================================== */
-
+    /* Selectbox */
     div[data-baseweb="select"] {
         width: max-content !important;
         min-width: 400px;
@@ -75,29 +65,7 @@ st.markdown(
         width: max-content !important;
     }
 
-
-    /* ======================================================
-       LOGO
-       ====================================================== */
-
-    [data-testid="stImage"] {
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
-    [data-testid="stImage"] img {
-        width: 100% !important;
-        height: auto !important;
-        display: block !important;
-        object-fit: contain !important;
-    }
-
-
-    /* ======================================================
-       TABELA
-       ====================================================== */
-
+    /* Cabeçalho da tabela */
     [data-testid="stDataFrameHeaderCell"],
     [data-testid="stDataFrameHeaderCell"] div,
     [data-testid="stDataFrameHeaderCell"] span {
@@ -105,6 +73,7 @@ st.markdown(
         justify-content: center !important;
     }
 
+    /* Células da tabela */
     [data-testid="stDataFrameDataCell"] div,
     [data-testid="stDataFrameDataCell"] span {
         text-align: center !important;
@@ -113,11 +82,7 @@ st.markdown(
         align-items: center !important;
     }
 
-
-    /* ======================================================
-       GRÁFICO
-       ====================================================== */
-
+    /* Gráfico */
     .grafico-container {
         overflow-x: auto;
         overflow-y: auto;
@@ -129,11 +94,7 @@ st.markdown(
         display: none !important;
     }
 
-
-    /* ======================================================
-       LEGENDA
-       ====================================================== */
-
+    /* Legenda */
     .legenda-container {
         display: flex;
         gap: 20px;
@@ -156,6 +117,11 @@ st.markdown(
         border-radius: 3px;
     }
 
+    /* Botão limpar */
+    div[data-testid="stButton"] button {
+        min-height: 42px;
+    }
+
     </style>
     """,
     unsafe_allow_html=True,
@@ -170,7 +136,7 @@ if os.path.exists("logo3.png"):
 
     st.image(
         "logo3.png",
-        width="stretch"
+        use_container_width=True
     )
 
 else:
@@ -188,17 +154,13 @@ st.title("📊 Violência contra mulher / Dados por região")
 
 
 # ============================================================
-# PLANILHA
+# CONFIGURAÇÕES DA PLANILHA
 # ============================================================
 
 CHAVE_PLANILHA = (
     "2PACX-1vRw2uafpMmb-dtOv9fZpqN1vVwkdxV6diO1bUj-FPQJm_-M5vIEEW_q7mqoEE_AmrF_WWjL92KfB3xk"
 )
 
-
-# ============================================================
-# REGIÕES
-# ============================================================
 
 MAPA_REGIOES = {
     "Grande Florianópolis": "0",
@@ -234,20 +196,34 @@ def carregar_dados_brutos(chave, gid):
 
 
 # ============================================================
-# BOTÃO ATUALIZAR PLANILHA
+# FUNÇÃO PARA LIMPAR O DASHBOARD
 # ============================================================
 
-if st.button(
-    "🔄 Atualizar Dados da Planilha",
-    use_container_width=False
-):
+def limpar_dashboard():
 
-    st.cache_data.clear()
-    st.rerun()
+    # Volta a região para o estado inicial
+    st.session_state["regiao_guia"] = "Escolha a Região..."
+
+    # Remove seleções dinâmicas
+    chaves_para_remover = []
+
+    for chave in list(st.session_state.keys()):
+
+        if (
+            chave.startswith("seletor_ocorrencia_")
+            or chave.startswith("radio_")
+            or chave.startswith("c_")
+        ):
+            chaves_para_remover.append(chave)
+
+    for chave in chaves_para_remover:
+
+        if chave in st.session_state:
+            del st.session_state[chave]
 
 
 # ============================================================
-# MENU DE NAVEGAÇÃO
+# MENU SUPERIOR
 # ============================================================
 
 pagina_selecionada = st.radio(
@@ -259,36 +235,11 @@ pagina_selecionada = st.radio(
     horizontal=True,
 )
 
-
 st.write("---")
 
 
 # ============================================================
-# FUNÇÃO PARA LIMPAR O DASHBOARD
-# ============================================================
-
-def limpar_dashboard():
-
-    # Região
-    st.session_state["regiao_guia"] = "Escolha a Região..."
-
-    # Procura todas as chaves que precisam ser removidas
-    chaves_para_remover = [
-        chave
-        for chave in list(st.session_state.keys())
-        if chave.startswith("seletor_ocorrencia_")
-        or chave.startswith("radio_")
-        or chave.startswith("c_")
-    ]
-
-    for chave in chaves_para_remover:
-
-        if chave in st.session_state:
-            del st.session_state[chave]
-
-
-# ============================================================
-# PÁGINA 1 - DADOS POR REGIÃO
+# PÁGINA 1 — DADOS POR REGIÃO
 # ============================================================
 
 if pagina_selecionada == "📊 Dados por Região (Detalhado)":
@@ -296,15 +247,20 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
     try:
 
         # ----------------------------------------------------
-        # REGIÃO + BOTÃO LIMPAR
+        # OPÇÕES DE REGIÃO
         # ----------------------------------------------------
 
-        opcoes_regiao = (
-            ["Escolha a Região..."]
-            + list(MAPA_REGIOES.keys())
-        )
+        opcoes_regiao = [
+            "Escolha a Região..."
+        ] + list(MAPA_REGIOES.keys())
+
+
+        # ----------------------------------------------------
+        # COLUNAS DA REGIÃO E BOTÃO LIMPAR
+        # ----------------------------------------------------
 
         col_regiao, col_limpar = st.columns([5, 1])
+
 
         with col_regiao:
 
@@ -314,9 +270,11 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                 key="regiao_guia",
             )
 
+
         with col_limpar:
 
             st.write("")
+
             st.write("")
 
             st.button(
@@ -327,7 +285,7 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
 
 
         # ----------------------------------------------------
-        # NENHUMA REGIÃO SELECIONADA
+        # SE NENHUMA REGIÃO FOI ESCOLHIDA
         # ----------------------------------------------------
 
         if aba_selecionada == "Escolha a Região...":
@@ -337,13 +295,14 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
             )
 
 
-        # ----------------------------------------------------
-        # REGIÃO SELECIONADA
-        # ----------------------------------------------------
-
         else:
 
+            # ------------------------------------------------
+            # CARREGA A REGIÃO
+            # ------------------------------------------------
+
             gid_atual = MAPA_REGIOES[aba_selecionada]
+
 
             with st.spinner(
                 f"Carregando dados de: {aba_selecionada}..."
@@ -355,9 +314,9 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                 )
 
 
-            # =================================================
+            # ------------------------------------------------
             # POPULAÇÃO
-            # =================================================
+            # ------------------------------------------------
 
             populacao_atual = None
 
@@ -377,11 +336,13 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                         df_bruto.iloc[2, 4]
                     ).strip()
 
+
                     apenas_numeros = re.sub(
                         r"\D",
                         "",
                         celula_e3
                     )
+
 
                     if apenas_numeros:
 
@@ -394,16 +355,12 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                             .replace(",", ".")
                         )
 
-
             except Exception:
 
                 pass
 
 
-            if (
-                not populacao_atual
-                or populacao_atual == 0
-            ):
+            if not populacao_atual or populacao_atual == 0:
 
                 populacao_atual = 1000000
 
@@ -412,15 +369,19 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                 )
 
 
+            # ------------------------------------------------
+            # MÉTRICA
+            # ------------------------------------------------
+
             st.metric(
                 label="👥 População Feminina Aproximada",
                 value=texto_populacao_formatado,
             )
 
 
-            # =================================================
-            # LOCALIZA OCORRÊNCIAS
-            # =================================================
+            # ------------------------------------------------
+            # LOCALIZA AS OCORRÊNCIAS
+            # ------------------------------------------------
 
             indices_titulos = []
             nomes_titulos = []
@@ -431,6 +392,7 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                 celula_texto = str(
                     row.iloc[0]
                 ).upper()
+
 
                 if (
                     "FATO COMUNICADO" in celula_texto
@@ -447,8 +409,7 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
             if not nomes_titulos:
 
                 st.warning(
-                    "⚠️ Nenhum padrão "
-                    "'FATO COMUNICADO' "
+                    "⚠️ Nenhum padrão 'FATO COMUNICADO' "
                     "localizado nesta guia."
                 )
 
@@ -458,15 +419,14 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
 
             else:
 
-                opcoes_combo = (
-                    ["Escolha a Ocorrência..."]
-                    + nomes_titulos
-                )
+                opcoes_combo = [
+                    "Escolha a Ocorrência..."
+                ] + nomes_titulos
 
 
-            # =================================================
-            # SELECTBOX OCORRÊNCIA
-            # =================================================
+            # ------------------------------------------------
+            # SELECTBOX DE OCORRÊNCIA
+            # ------------------------------------------------
 
             chave_seletor_dinamico = (
                 f"seletor_ocorrencia_{aba_selecionada}"
@@ -480,25 +440,23 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
             )
 
 
-            # =================================================
+            # ------------------------------------------------
             # NENHUMA OCORRÊNCIA
-            # =================================================
+            # ------------------------------------------------
 
-            if (
-                titulo_selecionado
-                == "Escolha a Ocorrência..."
-            ):
+            if titulo_selecionado == "Escolha a Ocorrência...":
 
                 st.info(
-                    "ℹ️ Por favor, selecione o tipo "
-                    "de ocorrência desejado."
+                    "ℹ️ Por favor, selecione o tipo de "
+                    "ocorrência desejado."
                 )
 
 
-            elif (
-                titulo_selecionado
-                == "Padrão não encontrado"
-            ):
+            # ------------------------------------------------
+            # PADRÃO NÃO ENCONTRADO
+            # ------------------------------------------------
+
+            elif titulo_selecionado == "Padrão não encontrado":
 
                 st.dataframe(
                     df_bruto,
@@ -506,26 +464,22 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                 )
 
 
-            # =================================================
+            # ------------------------------------------------
             # OCORRÊNCIA SELECIONADA
-            # =================================================
+            # ------------------------------------------------
 
             else:
 
                 st.write("---")
 
 
-                idx_selecionado = (
-                    nomes_titulos.index(
-                        titulo_selecionado
-                    )
+                idx_selecionado = nomes_titulos.index(
+                    titulo_selecionado
                 )
 
 
                 linha_inicio_titulo = (
-                    indices_titulos[
-                        idx_selecionado
-                    ]
+                    indices_titulos[idx_selecionado]
                 )
 
 
@@ -552,27 +506,22 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
 
                 else:
 
-                    linha_fim_dados = len(
-                        df_bruto
-                    )
+                    linha_fim_dados = len(df_bruto)
 
 
-                # =================================================
+                # --------------------------------------------
                 # BLOCO DE DADOS
-                # =================================================
+                # --------------------------------------------
 
                 df_bloco = df_bruto.iloc[
-                    linha_inicio_dados:
-                    linha_fim_dados
+                    linha_inicio_dados:linha_fim_dados
                 ].copy()
 
 
                 nomes_colunas = []
 
 
-                for i in range(
-                    df_bloco.shape[1]
-                ):
+                for i in range(df_bloco.shape[1]):
 
                     celula_cabecalho = str(
                         df_bruto.iloc[
@@ -587,16 +536,13 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                         if (
                             celula_cabecalho.lower()
                             != "nan"
-                            and celula_cabecalho
-                            != ""
+                            and celula_cabecalho != ""
                         )
                         else f"Unnamed_{i}"
                     )
 
 
-                df_bloco.columns = (
-                    nomes_colunas
-                )
+                df_bloco.columns = nomes_colunas
 
 
                 df_bloco = (
@@ -606,9 +552,9 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                 )
 
 
-                # =================================================
-                # IDENTIFICA COLUNAS
-                # =================================================
+                # --------------------------------------------
+                # LOCALIZA COLUNAS
+                # --------------------------------------------
 
                 coluna_ano_real = (
                     df_bloco.columns[0]
@@ -619,9 +565,7 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
 
                 for col in df_bloco.columns:
 
-                    nome_coluna = str(
-                        col
-                    ).lower()
+                    nome_coluna = str(col).lower()
 
 
                     if "ano" in nome_coluna:
@@ -637,43 +581,35 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                         coluna_casos_reais = col
 
 
-                # =================================================
-                # COLUNAS PERMITIDAS
-                # =================================================
+                # --------------------------------------------
+                # FILTRA COLUNAS
+                # --------------------------------------------
 
                 colunas_permitidas = []
 
 
                 for col in df_bloco.columns:
 
-                    c_low = str(
-                        col
-                    ).lower()
+                    c_low = str(col).lower()
 
 
                     if "unnamed" not in c_low:
 
                         if (
-                            col
-                            == coluna_ano_real
-                            or col
-                            == coluna_casos_reais
+                            col == coluna_ano_real
+                            or col == coluna_casos_reais
                             or "pa" in c_low
                             or "pg" in c_low
                             or "media" in c_low
                             or "média" in c_low
                         ):
 
-                            colunas_permitidas.append(
-                                col
-                            )
+                            colunas_permitidas.append(col)
 
 
-                df_exibicao = (
-                    df_bloco[
-                        colunas_permitidas
-                    ].copy()
-                )
+                df_exibicao = df_bloco[
+                    colunas_permitidas
+                ].copy()
 
 
                 df_exibicao = df_exibicao[
@@ -686,9 +622,9 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                 ]
 
 
-                # =================================================
+                # --------------------------------------------
                 # CÁLCULOS
-                # =================================================
+                # --------------------------------------------
 
                 if (
                     coluna_casos_reais
@@ -713,17 +649,13 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                     )
 
 
-                    numeros_finais = (
-                        pd.to_numeric(
-                            vetor_casos,
-                            errors="coerce"
-                        ).to_numpy()
-                    )
+                    numeros_finais = pd.to_numeric(
+                        vetor_casos,
+                        errors="coerce"
+                    ).to_numpy()
 
 
-                    strings_var_final = [
-                        "-----"
-                    ]
+                    strings_var_final = ["-----"]
 
                     valores_per_capita = []
 
@@ -757,15 +689,11 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                     ):
 
                         anterior = (
-                            numeros_finais[
-                                idx - 1
-                            ]
+                            numeros_finais[idx - 1]
                         )
 
                         atual = (
-                            numeros_finais[
-                                idx
-                            ]
+                            numeros_finais[idx]
                         )
 
 
@@ -782,10 +710,7 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                         else:
 
                             calc = (
-                                (
-                                    atual
-                                    - anterior
-                                )
+                                (atual - anterior)
                                 / anterior
                             ) * 100
 
@@ -796,10 +721,7 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                             )
 
 
-                            if (
-                                calc_arredondado
-                                == 0.0
-                            ):
+                            if calc_arredondado == 0.0:
 
                                 strings_var_final.append(
                                     "-----"
@@ -854,20 +776,15 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                         )
 
 
-                    if (
-                        "Taxa por 1.000 Hab."
-                        in todas_cols
-                    ):
+                    if "Taxa por 1.000 Hab." in todas_cols:
 
                         todas_cols.remove(
                             "Taxa por 1.000 Hab."
                         )
 
 
-                    idx_pos = (
-                        todas_cols.index(
-                            coluna_casos_reais
-                        )
+                    idx_pos = todas_cols.index(
+                        coluna_casos_reais
                     )
 
 
@@ -883,27 +800,19 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                     )
 
 
-                    df_exibicao = (
-                        df_exibicao[
-                            todas_cols
-                        ]
-                    )
+                    df_exibicao = df_exibicao[
+                        todas_cols
+                    ]
 
 
-                # =================================================
-                # LIMPA VALORES
-                # =================================================
+                # --------------------------------------------
+                # LIMPA CÉLULAS
+                # --------------------------------------------
 
-                for coluna in (
-                    df_exibicao.columns
-                ):
+                for coluna in df_exibicao.columns:
 
-                    df_exibicao[
-                        coluna
-                    ] = (
-                        df_exibicao[
-                            coluna
-                        ]
+                    df_exibicao[coluna] = (
+                        df_exibicao[coluna]
                         .astype(str)
                         .str.strip()
                         .replace(
@@ -920,9 +829,9 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                     )
 
 
-                # =================================================
+                # --------------------------------------------
                 # TABELA
-                # =================================================
+                # --------------------------------------------
 
                 st.subheader(
                     f"📋 Tabela de Dados — "
@@ -939,9 +848,9 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                     )
 
 
-                    # =================================================
+                    # ----------------------------------------
                     # GRÁFICO
-                    # =================================================
+                    # ----------------------------------------
 
                     if coluna_casos_reais:
 
@@ -967,29 +876,23 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                         )
 
 
-                        # ---------------------------------------------
+                        # ------------------------------------
                         # CHECKBOXES
-                        # ---------------------------------------------
+                        # ------------------------------------
 
                         mapeamento_checkboxes = {}
 
 
-                        for col in (
-                            df_exibicao.columns
-                        ):
+                        for col in df_exibicao.columns:
 
                             c_low = col.lower()
 
 
                             if (
-                                col
-                                == coluna_ano_real
-                                or col
-                                == coluna_casos_reais
-                                or "variação"
-                                in c_low
-                                or "1.000"
-                                in c_low
+                                col == coluna_ano_real
+                                or col == coluna_casos_reais
+                                or "variação" in c_low
+                                or "1.000" in c_low
                             ):
 
                                 continue
@@ -997,8 +900,7 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
 
                             if (
                                 "pa" in c_low
-                                and "media"
-                                not in c_low
+                                and "media" not in c_low
                             ):
 
                                 mapeamento_checkboxes[
@@ -1008,8 +910,7 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
 
                             elif (
                                 "pg" in c_low
-                                and "media"
-                                not in c_low
+                                and "media" not in c_low
                             ):
 
                                 mapeamento_checkboxes[
@@ -1037,8 +938,7 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                         if mapeamento_checkboxes:
 
                             st.markdown(
-                                "**Selecione as "
-                                "projeções desejadas:**"
+                                "**Selecione as projeções desejadas:**"
                             )
 
 
@@ -1065,7 +965,7 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                                             f"{label}_"
                                             f"{aba_selecionada}_"
                                             f"{idx_selecionado}"
-                                        )
+                                        ),
                                     ):
 
                                         colunas_selecionadas_reais.append(
@@ -1075,9 +975,9 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                                         )
 
 
-                        # ---------------------------------------------
+                        # ------------------------------------
                         # LEGENDA
-                        # ---------------------------------------------
+                        # ------------------------------------
 
                         st.markdown(
                             """
@@ -1086,7 +986,9 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                                 <div class="legenda-item">
                                     <div
                                         class="legenda-cor"
-                                        style="background-color:#007bff;"
+                                        style="
+                                            background-color:#007bff;
+                                        "
                                     ></div>
                                     <span>Casos Reais</span>
                                 </div>
@@ -1094,7 +996,9 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                                 <div class="legenda-item">
                                     <div
                                         class="legenda-cor"
-                                        style="background-color:#28a745;"
+                                        style="
+                                            background-color:#28a745;
+                                        "
                                     ></div>
                                     <span>Projeções PA</span>
                                 </div>
@@ -1102,24 +1006,24 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                                 <div class="legenda-item">
                                     <div
                                         class="legenda-cor"
-                                        style="background-color:#dc3545;"
+                                        style="
+                                            background-color:#dc3545;
+                                        "
                                     ></div>
                                     <span>Projeções PG</span>
                                 </div>
 
                             </div>
                             """,
-                            unsafe_allow_html=True
+                            unsafe_allow_html=True,
                         )
 
 
-                        # ---------------------------------------------
-                        # DADOS DO GRÁFICO
-                        # ---------------------------------------------
+                        # ------------------------------------
+                        # PREPARA GRÁFICO
+                        # ------------------------------------
 
-                        df_grafico = (
-                            df_exibicao.copy()
-                        )
+                        df_grafico = df_exibicao.copy()
 
 
                         colunas_para_plotar = (
@@ -1128,16 +1032,10 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                         )
 
 
-                        for col in (
-                            colunas_para_plotar
-                        ):
+                        for col in colunas_para_plotar:
 
-                            df_grafico[
-                                col
-                            ] = pd.to_numeric(
-                                df_grafico[
-                                    col
-                                ]
+                            df_grafico[col] = pd.to_numeric(
+                                df_grafico[col]
                                 .astype(str)
                                 .str.replace(
                                     ".",
@@ -1176,24 +1074,19 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                         )
 
 
-                        # ---------------------------------------------
+                        # ------------------------------------
                         # CORES
-                        # ---------------------------------------------
+                        # ------------------------------------
 
                         mapeamento_cores = {}
 
 
-                        for col in (
-                            colunas_para_plotar
-                        ):
+                        for col in colunas_para_plotar:
 
                             c_low = col.lower()
 
 
-                            if (
-                                col
-                                == coluna_casos_reais
-                            ):
+                            if col == coluna_casos_reais:
 
                                 mapeamento_cores[
                                     col
@@ -1221,28 +1114,25 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                                 ] = "#6c757d"
 
 
-                        # ---------------------------------------------
+                        # ------------------------------------
                         # MELT
-                        # ---------------------------------------------
+                        # ------------------------------------
 
-                        df_longo = (
-                            df_grafico.melt(
-                                id_vars=[
-                                    coluna_ano_real
-                                ],
-                                value_vars=[
-                                    *colunas_para_plotar
-                                ],
-                                var_name="Métrica",
-                                value_name="Valores",
-                            )
+                        df_longo = df_grafico.melt(
+                            id_vars=[
+                                coluna_ano_real
+                            ],
+                            value_vars=[
+                                *colunas_para_plotar
+                            ],
+                            var_name="Métrica",
+                            value_name="Valores",
                         )
 
 
                         if not df_longo.dropna(
                             subset=["Valores"]
                         ).empty:
-
 
                             base = alt.Chart(
                                 df_longo
@@ -1263,14 +1153,17 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
 
                                 color=alt.Color(
                                     "Métrica:N",
+
                                     scale=alt.Scale(
                                         domain=list(
                                             mapeamento_cores.keys()
                                         ),
+
                                         range=list(
                                             mapeamento_cores.values()
                                         ),
                                     ),
+
                                     legend=None,
                                 ),
                             )
@@ -1288,11 +1181,8 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
 
                             else:
 
-                                chart = (
-                                    base.mark_bar()
-                                    .encode(
-                                        xOffset="Métrica:N"
-                                    )
+                                chart = base.mark_bar().encode(
+                                    xOffset="Métrica:N"
                                 )
 
 
@@ -1307,6 +1197,7 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
                                     width=900,
                                     height=450
                                 ).interactive(),
+
                                 use_container_width=False,
                             )
 
@@ -1340,49 +1231,49 @@ if pagina_selecionada == "📊 Dados por Região (Detalhado)":
 
 
 # ============================================================
-# PÁGINA 2 - COMPARATIVO GERAL
+# PÁGINA 2 — COMPARATIVO GERAL
 # ============================================================
 
 else:
 
     st.subheader(
-        "🗺️ Média Geral Histórica por Tipo de "
-        "Ocorrência e Região"
+        "🗺️ Média Geral Histórica por Tipo de Ocorrência e Região"
     )
 
 
     st.write(
-        "Selecione o tipo de ocorrência abaixo para "
-        "visualizar a tabela com a **média geral "
-        "proporcional** (taxa média por 1.000 habitantes "
-        "femininas considerando todos os anos disponíveis) "
-        "de cada região."
+        "Selecione o tipo de ocorrência abaixo para visualizar "
+        "a tabela com a **média geral proporcional** "
+        "(taxa média por 1.000 habitantes femininas "
+        "considerando todos os anos disponíveis) de cada região."
     )
 
 
     try:
 
-        primeira_regiao_gid = (
-            list(
-                MAPA_REGIOES.values()
-            )[0]
+        # ----------------------------------------------------
+        # CARREGA REGIÃO MODELO
+        # ----------------------------------------------------
+
+        primeira_regiao_gid = list(
+            MAPA_REGIOES.values()
+        )[0]
+
+
+        df_modelo = carregar_dados_brutos(
+            CHAVE_PLANILHA,
+            primeira_regiao_gid
         )
 
 
-        df_modelo = (
-            carregar_dados_brutos(
-                CHAVE_PLANILHA,
-                primeira_regiao_gid
-            )
-        )
-
+        # ----------------------------------------------------
+        # LOCALIZA OCORRÊNCIAS
+        # ----------------------------------------------------
 
         nomes_titulos_geral = []
 
 
-        for idx, row in (
-            df_modelo.iterrows()
-        ):
+        for idx, row in df_modelo.iterrows():
 
             celula_texto = str(
                 row.iloc[0]
@@ -1390,16 +1281,12 @@ else:
 
 
             if (
-                "FATO COMUNICADO"
-                in celula_texto
-                or "OCORRÊNCIA"
-                in celula_texto
+                "FATO COMUNICADO" in celula_texto
+                or "OCORRÊNCIA" in celula_texto
             ):
 
                 nomes_titulos_geral.append(
-                    str(
-                        row.iloc[0]
-                    ).strip()
+                    str(row.iloc[0]).strip()
                 )
 
 
@@ -1413,15 +1300,15 @@ else:
 
         else:
 
-            ocorrencia_escolhida = (
-                st.selectbox(
-                    "Selecione a Ocorrência "
-                    "para Média Geral:",
-                    options=[
-                        "Escolha a Ocorrência..."
-                    ]
-                    + nomes_titulos_geral,
-                )
+            # ------------------------------------------------
+            # SELECTBOX
+            # ------------------------------------------------
+
+            ocorrencia_escolhida = st.selectbox(
+                "Selecione a Ocorrência para Média Geral:",
+                options=[
+                    "Escolha a Ocorrência..."
+                ] + nomes_titulos_geral,
             )
 
 
@@ -1438,28 +1325,26 @@ else:
                     "proporcionais de todas as regiões..."
                 ):
 
-
                     dados_comparativos = []
 
 
-                    for (
-                        nome_reg,
-                        gid_reg
-                    ) in MAPA_REGIOES.items():
+                    # ----------------------------------------
+                    # PERCORRE REGIÕES
+                    # ----------------------------------------
+
+                    for nome_reg, gid_reg in MAPA_REGIOES.items():
 
                         try:
 
-                            df_b = (
-                                carregar_dados_brutos(
-                                    CHAVE_PLANILHA,
-                                    gid_reg
-                                )
+                            df_b = carregar_dados_brutos(
+                                CHAVE_PLANILHA,
+                                gid_reg
                             )
 
 
-                            # -----------------------------------------
+                            # --------------------------------
                             # POPULAÇÃO
-                            # -----------------------------------------
+                            # --------------------------------
 
                             pop = 1000000
 
@@ -1485,16 +1370,14 @@ else:
                                     )
 
 
-                            # -----------------------------------------
+                            # --------------------------------
                             # LOCALIZA OCORRÊNCIA
-                            # -----------------------------------------
+                            # --------------------------------
 
                             idx_titulo = -1
 
 
-                            for idx, row in (
-                                df_b.iterrows()
-                            ):
+                            for idx, row in df_b.iterrows():
 
                                 if (
                                     str(
@@ -1504,6 +1387,7 @@ else:
                                 ):
 
                                     idx_titulo = idx
+
                                     break
 
 
@@ -1513,6 +1397,9 @@ else:
                                 < len(df_b)
                             ):
 
+                                # ----------------------------
+                                # PRÓXIMA OCORRÊNCIA
+                                # ----------------------------
 
                                 prox_titulo = len(
                                     df_b
@@ -1546,6 +1433,10 @@ else:
                                         break
 
 
+                                # ----------------------------
+                                # BLOCO
+                                # ----------------------------
+
                                 df_sub = (
                                     df_b.iloc[
                                         idx_titulo + 2:
@@ -1557,9 +1448,9 @@ else:
                                 )
 
 
-                                # -----------------------------------------
+                                # ----------------------------
                                 # COLUNA DE CASOS
-                                # -----------------------------------------
+                                # ----------------------------
 
                                 col_caso = None
 
@@ -1577,32 +1468,33 @@ else:
 
 
                                     if (
-                                        "caso"
-                                        in c_name
-                                        or "real"
-                                        in c_name
+                                        "caso" in c_name
+                                        or "real" in c_name
                                     ):
 
                                         col_caso = c_idx
+
                                         break
 
 
                                 if (
-                                    col_caso
-                                    is not None
+                                    col_caso is not None
                                     and not df_sub.empty
                                 ):
 
-
                                     taxas_anuais = []
+
                                     casos_totais = []
 
+
+                                    # ------------------------
+                                    # CALCULA TAXAS
+                                    # ------------------------
 
                                     for (
                                         row_i,
                                         r_val
                                     ) in df_sub.iterrows():
-
 
                                         ano_val = str(
                                             r_val.iloc[0]
@@ -1627,27 +1519,23 @@ else:
                                             ]
                                         ):
 
-
-                                            num_casos = (
-                                                pd.to_numeric(
-                                                    caso_val_raw
-                                                    .replace(
-                                                        ".",
-                                                        ""
-                                                    )
-                                                    .replace(
-                                                        ",",
-                                                        "."
-                                                    ),
-                                                    errors="coerce"
+                                            num_casos = pd.to_numeric(
+                                                caso_val_raw
+                                                .replace(
+                                                    ".",
+                                                    ""
                                                 )
+                                                .replace(
+                                                    ",",
+                                                    "."
+                                                ),
+                                                errors="coerce"
                                             )
 
 
                                             if not pd.isna(
                                                 num_casos
                                             ):
-
 
                                                 taxa_anual = (
                                                     num_casos
@@ -1665,8 +1553,11 @@ else:
                                                 )
 
 
-                                    if taxas_anuais:
+                                    # ------------------------
+                                    # MÉDIAS
+                                    # ------------------------
 
+                                    if taxas_anuais:
 
                                         media_taxa = (
                                             sum(
@@ -1690,8 +1581,7 @@ else:
 
                                         dados_comparativos.append(
                                             {
-                                                "Região":
-                                                    nome_reg,
+                                                "Região": nome_reg,
 
                                                 "População Feminina":
                                                     int(pop),
@@ -1716,12 +1606,11 @@ else:
                             continue
 
 
-                    # -----------------------------------------
-                    # RESULTADO
-                    # -----------------------------------------
+                    # ----------------------------------------
+                    # MOSTRA RESULTADO
+                    # ----------------------------------------
 
                     if dados_comparativos:
-
 
                         df_comp = pd.DataFrame(
                             dados_comparativos
@@ -1732,8 +1621,7 @@ else:
                             df_comp
                             .sort_values(
                                 by=(
-                                    "Média da Taxa "
-                                    "por 1.000 Hab."
+                                    "Média da Taxa por 1.000 Hab."
                                 ),
                                 ascending=False
                             )
@@ -1745,7 +1633,7 @@ else:
 
                         st.subheader(
                             "📋 Tabela de Média Geral "
-                            "Histórica — "
+                            f"Histórica — "
                             f"{ocorrencia_escolhida}"
                         )
 
